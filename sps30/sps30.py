@@ -53,9 +53,9 @@ class SPS30:
         self.i2c = I2C(bus, address)
         self.__data = Queue(maxsize=2)
         self.__valid = {
-            "mass_density": False,
-            "particle_count": False,
-            "particle_size": False
+            "mass_concentration": False,
+            "number_concentration": False,
+            "typical_particle_size": False
         }
 
     def crc_calc(self, data: list) -> int:
@@ -233,7 +233,7 @@ class SPS30:
         else:
             return round((((-1)**(sign) * real) + dec) / pow(2, divider), 3)
 
-    def __mass_density_measurement(self, data: list) -> dict:
+    def __mass_concentration_measurement(self, data: list) -> dict:
         category = ["pm1.0", "pm2.5", "pm4.0", "pm10"]
 
         density = {
@@ -248,11 +248,11 @@ class SPS30:
             for i in range(0, SIZE_FLOAT, PACKET_SIZE):
                 offset = (block * SIZE_FLOAT) + i
                 if self.crc_calc(data[offset:offset+2]) != data[offset+2]:
-                    self._warn("'__mass_density_measurement' CRC mismatched!" 
+                    self._warn("'__mass_concentration_measurement' CRC mismatched!" 
                                f"  Data: {data[offset:offset+2]}" 
                                f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" 
                                f"  Expected: {data[offset+2]}")
-                    self.__valid["mass_density"] = False
+                    self.__valid["mass_concentration"] = False
                     return {}
 
                 pm_data.extend(data[offset:offset+2])
@@ -260,11 +260,11 @@ class SPS30:
             density[pm] = self.__ieee754_number_conversion(
                 pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
 
-        self.__valid["mass_density"] = True
+        self.__valid["mass_concentration"] = True
 
         return density
 
-    def __particle_count_measurement(self, data: list) -> dict:
+    def __number_concentration_measurement(self, data: list) -> dict:
         category = ["pm0.5", "pm1.0", "pm2.5", "pm4.0", "pm10"]
 
         count = {
@@ -280,12 +280,12 @@ class SPS30:
             for i in range(0, SIZE_FLOAT, PACKET_SIZE):
                 offset = (block * SIZE_FLOAT) + i
                 if self.crc_calc(data[offset:offset+2]) != data[offset+2]:
-                    self._warn("'__particle_count_measurement' CRC mismatched!" +
+                    self._warn("'__number_concentration_measurement' CRC mismatched!" +
                                f"  Data: {data[offset:offset+2]}" +
                                f"  Calculated CRC: {self.crc_calc(data[offset:offset+2])}" +
                                f"  Expected: {data[offset+2]}")
 
-                    self.__valid["particle_count"] = False
+                    self.__valid["number_concentration"] = False
                     return {}
 
                 pm_data.extend(data[offset:offset+2])
@@ -293,25 +293,25 @@ class SPS30:
             count[pm] = self.__ieee754_number_conversion(
                 pm_data[0] << 24 | pm_data[1] << 16 | pm_data[2] << 8 | pm_data[3])
 
-        self.__valid["particle_count"] = True
+        self.__valid["number_concentration"] = True
 
         return count
 
-    def __particle_size_measurement(self, data: list) -> float:
+    def __typical_particle_size_measurement(self, data: list) -> float:
         size = []
         for i in range(0, SIZE_FLOAT, PACKET_SIZE):
             if self.crc_calc(data[i:i+2]) != data[i+2]:
-                self._warn("'__particle_size_measurement' CRC mismatched!"
+                self._warn("'__typical_particle_size_measurement' CRC mismatched!"
                            f"  Data: {data[i:i+2]}"
                            f"  Calculated CRC: {self.crc_calc(data[i:i+2])}"
                            f"  Expected: {data[i+2]}")
 
-                self.__valid["particle_size"] = False
+                self.__valid["typical_particle_size"] = False
                 return 0.0
 
             size.extend(data[i:i+2])
 
-        self.__valid["particle_size"] = True
+        self.__valid["typical_particle_size"] = True
 
         return self.__ieee754_number_conversion(size[0] << 24 | size[1] << 16 | size[2] << 8 | size[3])
 
@@ -329,12 +329,12 @@ class SPS30:
 
                 result = {
                     "sensor_data": {
-                        "mass_density": self.__mass_density_measurement(data[:24]),
-                        "particle_count": self.__particle_count_measurement(data[24:54]),
-                        "particle_size": self.__particle_size_measurement(data[54:]),
-                        "mass_density_unit": "ug/m3",
-                        "particle_count_unit": "#/cm3",
-                        "particle_size_unit": "um"
+                        "mass_concentration": self.__mass_concentration_measurement(data[:24]),
+                        "number_concentration": self.__number_concentration_measurement(data[24:54]),
+                        "typical_particle_size": self.__typical_particle_size_measurement(data[54:]),
+                        "mass_concentration_unit": "µg/m³",
+                        "number_concentration_unit": "#/cm³",
+                        "typical_particle_size_unit": "µm"
                     },
                     "timestamp": int(datetime.now(timezone.utc).timestamp())
                 }

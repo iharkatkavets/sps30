@@ -83,26 +83,69 @@ if __name__ == "__main__":
 
 ```json
 {
-  "sensor_data": {
-    "mass_density": {
-      "pm1.0": 1.883,
-      "pm2.5": 3.889,
-      "pm4.0": 6.232,
-      "pm10": 6.7
+  "measurements": [
+    {
+        "measurement": "mass_density",
+        "parameter": "pm1.0",
+        "value": 1.883,
+        "unit": "ug/m3"
     },
-    "particle_count": {
-      "pm0.5": 1.302,
-      "pm1.0": 4.595,
-      "pm2.5": 7.326,
-      "pm4.0": 7.864,
-      "pm10": 7.967
+    {
+        "measurement": "mass_density",
+        "parameter": "pm2.5",
+        "value": 1.883,
+        "unit": "ug/m3"
     },
-    "particle_size": 1.63,
-    "mass_density_unit": "ug/m3",
-    "particle_count_unit": "#/cm3",
-    "particle_size_unit": "um"
-  },
-  "timestamp": 1630217804
+    {
+        "measurement": "mass_density",
+        "parameter": "pm4.0",
+        "value": 1.883,
+        "unit": "ug/m3"
+    },
+    {
+        "measurement": "mass_density",
+        "parameter": "pm10",
+        "value": 1.883,
+        "unit": "ug/m3"
+    },
+    {
+        "measurement": "particle_count",
+        "parameter": "pm0.5",
+        "value": 1.883,
+        "unit": "#/cm3"
+    },
+    {
+        "measurement": "particle_count",
+        "parameter": "pm1.0",
+        "value": 1.883,
+        "unit": "#/cm3"
+    },
+    {
+        "measurement": "particle_count",
+        "parameter": "pm2.5",
+        "value": 1.883,
+        "unit": "#/cm3"
+    },
+    {
+        "measurement": "particle_count",
+        "parameter": "pm4.0",
+        "value": 1.883,
+        "unit": "#/cm3"
+    },
+    {
+        "measurement": "particle_count",
+        "parameter": "pm10",
+        "value": 1.883,
+        "unit": "#/cm3"
+    },
+    {
+        "measurement": "particle_size",
+        "value": 1.53,
+        "unit": "um"
+    }
+  ],
+  "timestamp": 1630217804,
+  "sensor_id": "pizero1"
 }
 ```
 
