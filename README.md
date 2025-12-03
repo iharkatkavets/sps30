@@ -158,13 +158,14 @@ None
 Create a file at `/etc/systemd/system/sps30-measurement.service`
 
 ```ini
+cat /etc/systemd/system/sps30-measurement.service
 [Unit]
-Description=SPS30 Measurement service
+Description=SPS30 Sensor service
 After=network.target
 
 [Service]
 Environment="PYTHONPATH=/home/pi/services/sps30-service"
-ExecStart=/usr/bin/python3 /home/pi/services/sps30-service/examples/sps30-service.py --host "raspberrypi:4001" --delay 1
+ExecStart=/usr/bin/python3 /home/pi/services/sps30-service/examples/sps30-service.py --host "pi4b:4001" --delay 1 --sensor_id "sps30.pizero" --sensor "sps30"
 WorkingDirectory=/home/pi/
 User=root
 Group=root
@@ -181,7 +182,7 @@ RuntimeDirectory=sps30-measurement
 WantedBy=multi-user.target
 ```
 
-Then run 
+Then run
 
 ```sh
 sudo systemctl daemon-reload

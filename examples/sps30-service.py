@@ -20,17 +20,17 @@ parser = argparse.ArgumentParser(description="SPS30 measument tool")
 parser.add_argument("--host", type=str, required=True, help="The host of api backend, like: raspberrypi.local:4001")
 parser.add_argument("--delay", default=10, type=int, required=False, help="Delay between measurements, default: 10")
 parser.add_argument("--sensor", default="sps30", type=str, required=True, help="sensor name for a request")
-parser.add_argument("--sensor_id", default=None, type=str, required=False, help="The sensor_id parameter for a request, like: pizero1")
+parser.add_argument("--sensor_id", default=None, type=str, required=True, help="The sensor_id parameter for a request, like: sps30.pizerow")
 opts = parser.parse_args()
 
 
 logger = logging.getLogger("sps30")
 
 
-def upload(host: str, payload: dict[str, Any], sensor: str):
+def upload(host: str, payload: dict[str, Any], sensor_id: str):
     """Upload sensor data as JSON to the API endpoint."""
 
-    url = f"http://{host}/api/measurements/{sensor}"
+    url = f"http://{host}/api/measurements/{sensor_id}"
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
             url, 
@@ -57,25 +57,15 @@ def upload(host: str, payload: dict[str, Any], sensor: str):
         logger.exception(f"Unexpected error during upload: {e}")
 
 
-def map_measurements_to_request(data: dict[str, Any], sensor_id: str) -> dict[str, Any]:
+def map_measurements_to_request(data: dict[str, Any], sensor: str) -> dict[str, Any]:
     sensor_data = data.get("sensor_data", {})
-    timestamp = data.get("timestamp")
 
-    if timestamp is not None:
-        iso_timestamp = (
-            datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z")
-        )
-    else:
-        return {}
-
-    result = {"timestamp": iso_timestamp, "sensor_id": sensor_id, "measurements": []}
+    result = {"sensor": sensor, "measurements": []}
 
     if "mass_concentration" in sensor_data and "mass_concentration_unit" in sensor_data:
         for param, value in sensor_data["mass_concentration"].items():
-            result["values"].append({
-                "sensor": "mass_concentration",
+            result["measurements"].append({
+                "measurement": "mass_concentration",
                 "parameter": param,
                 "value": value,
                 "unit": sensor_data["mass_concentration_unit"]
@@ -83,16 +73,16 @@ def map_measurements_to_request(data: dict[str, Any], sensor_id: str) -> dict[st
 
     if "number_concentration" in sensor_data and "number_concentration_unit" in sensor_data:
         for param, value in sensor_data["number_concentration"].items():
-            result["values"].append({
-                "sensor": "number_concentration",
+            result["measurements"].append({
+                "measurement": "number_concentration",
                 "parameter": param,
                 "value": value,
                 "unit": sensor_data["number_concentration_unit"]
             })
 
     if "typical_particle_size" in sensor_data and "typical_particle_size_unit" in sensor_data:
-        result["values"].append({
-            "sensor": "typical_particle_size",
+        result["measurements"].append({
+            "measurement": "typical_particle_size",
             "value": sensor_data["typical_particle_size"],
             "unit": sensor_data["typical_particle_size_unit"]
         })
@@ -116,12 +106,12 @@ def run(host, delay, sensor, sensor_id):
                 logger.info("Skip upload because of data absent")
                 continue
 
-            request_data = map_measurements_to_request(measurements, sensor_id, )
+            request_data = map_measurements_to_request(measurements, sensor)
             if not request_data:
                 logger.info("Skip sending because of data absent")
                 continue
 
-            upload(host, request_data, sensor=sensor)
+            upload(host, request_data, sensor_id=sensor_id)
         except KeyboardInterrupt:
             logger.info("Exiting ...")
             cleanup()
