@@ -5,7 +5,6 @@ import json
 import urllib.request
 import urllib.error
 from typing import Any
-from datetime import datetime, timezone
 from sps30 import SPS30
 import argparse
 import time
@@ -19,7 +18,7 @@ logging.basicConfig(format='[%(levelname)s] %(asctime)s %(message)s', level=logg
 parser = argparse.ArgumentParser(description="SPS30 measument tool")
 parser.add_argument("--host", type=str, required=True, help="The host of api backend, like: raspberrypi.local:4001")
 parser.add_argument("--delay", default=10, type=int, required=False, help="Delay between measurements, default: 10")
-parser.add_argument("--sensor", default="sps30", type=str, required=True, help="sensor name for a request")
+parser.add_argument("--sensor_name", default="sps30", type=str, required=True, help="sensor_name for a request")
 parser.add_argument("--sensor_id", default=None, type=str, required=True, help="The sensor_id parameter for a request, like: sps30.pizerow")
 opts = parser.parse_args()
 
@@ -57,10 +56,10 @@ def upload(host: str, payload: dict[str, Any], sensor_id: str):
         logger.exception(f"Unexpected error during upload: {e}")
 
 
-def map_measurements_to_request(data: dict[str, Any], sensor: str) -> dict[str, Any]:
+def map_measurements_to_request(data: dict[str, Any], sensor_name: str) -> dict[str, Any]:
     sensor_data = data.get("sensor_data", {})
 
-    result = {"sensor": sensor, "measurements": []}
+    result = {"sensor_name": sensor_name, "measurements": []}
 
     if "mass_concentration" in sensor_data and "mass_concentration_unit" in sensor_data:
         for param, value in sensor_data["mass_concentration"].items():
@@ -91,7 +90,7 @@ def map_measurements_to_request(data: dict[str, Any], sensor: str) -> dict[str, 
 
 
 pm_sensor = SPS30()
-def run(host, delay, sensor, sensor_id):
+def run(host, delay, sensor_name, sensor_id):
     res = pm_sensor.write_auto_cleaning_interval_days(2)
     if res["ok"]:
         logger.info(f"Set auto cleaning interval: {res['value']}s")
@@ -106,7 +105,7 @@ def run(host, delay, sensor, sensor_id):
                 logger.info("Skip upload because of data absent")
                 continue
 
-            request_data = map_measurements_to_request(measurements, sensor)
+            request_data = map_measurements_to_request(measurements, sensor_name)
             if not request_data:
                 logger.info("Skip sending because of data absent")
                 continue
